@@ -2,11 +2,10 @@ package com.ezest.mlfaceidentifier
 
 import android.Manifest
 import android.app.Activity
+import android.app.ProgressDialog
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
-import android.widget.Button
-import android.widget.EditText
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener
 import com.karumi.dexter.listener.single.CompositePermissionListener
@@ -21,7 +20,6 @@ import com.karumi.dexter.listener.multi.CompositeMultiplePermissionsListener
 import com.ezest.mlfaceidentifier.permissions_listener.SampleErrorListener
 import com.karumi.dexter.listener.PermissionRequestErrorListener
 import android.support.v4.content.ContextCompat
-import android.widget.TextView
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -32,10 +30,13 @@ import android.support.v7.app.AlertDialog
 import android.text.Editable
 import android.text.TextUtils
 import android.text.TextWatcher
+import android.view.Window
 import android.view.WindowManager
 import android.webkit.MimeTypeMap
-import android.widget.Toast
+import android.widget.*
 import com.ezest.mlfaceidentifier.permissions_listener.SampleBackgroundThreadPermissionListener
+import com.ezest.mlfaceidentifier.ui_section.ThankYouActivity
+import com.ezest.mlfaceidentifier.ui_section.tutorial_slider.WelcomeActivity
 import com.google.android.gms.tasks.Continuation
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.gms.tasks.Task
@@ -61,7 +62,9 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
     lateinit var readStoragePermission:PermissionListener
     lateinit var writeStoragePermission:PermissionListener
     lateinit var mStorageRef: StorageReference
+    lateinit var mRLParentLayout :RelativeLayout
     val VIDEO_CAPTURE = 101
+    val TUTORIAL_SETUP = 102
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -78,7 +81,7 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
         inputLName = findViewById(R.id.input_lname)
         inputEmail = findViewById(R.id.input_email)
         inputMobile = findViewById(R.id.input_mobile)
-
+        mRLParentLayout=findViewById(R.id.rl_parent)
         inputFName.addTextChangedListener(MyTextWatcher(inputFName))
         inputLName.addTextChangedListener(MyTextWatcher(inputLName))
         inputEmail.addTextChangedListener(MyTextWatcher(inputEmail))
@@ -95,17 +98,32 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (data != null) {
-            val videoUri = data.data
-            if (requestCode == VIDEO_CAPTURE) {
-                if (resultCode == Activity.RESULT_OK) {
+        if(requestCode == VIDEO_CAPTURE)
+        {
+            if (resultCode == Activity.RESULT_OK) {
+                if (data != null){
+                    val videoUri = data.data
                     uploadVideoFile(videoUri)
-                    //Toast.makeText(this, "Video saved to:\n" + videoUri!!, Toast.LENGTH_LONG).show()
-                } else if (resultCode == Activity.RESULT_CANCELED) {
-                    Toast.makeText(this, "Video recording cancelled.", Toast.LENGTH_LONG).show()
-                } else {
-                    Toast.makeText(this, "Failed to record video", Toast.LENGTH_LONG).show()
                 }
+            } else if (resultCode == Activity.RESULT_CANCELED) {
+                Toast.makeText(this, "Video recording cancelled.", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(this, "Failed to record video", Toast.LENGTH_LONG).show()
+            }
+        }
+        if(requestCode==TUTORIAL_SETUP){
+            if (resultCode == Activity.RESULT_OK) {
+                val takeVideoIntent = Intent(MediaStore.ACTION_VIDEO_CAPTURE)
+                if (takeVideoIntent.resolveActivity(packageManager) != null) {
+                    takeVideoIntent.putExtra(MediaStore.EXTRA_DURATION_LIMIT, 30)
+                    startActivityForResult(takeVideoIntent, VIDEO_CAPTURE)
+                }else{
+                    Toast.makeText(this, "Unable to access camera", Toast.LENGTH_LONG).show()
+                }
+            } else if (resultCode == Activity.RESULT_CANCELED) {
+                Toast.makeText(this, "Please read the tutorial first", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(this, "Something went wrong", Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -120,6 +138,8 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
     }
 
     private fun validateForm(){
+        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN)
+
         if (!validateFName()) {
             return
         }
@@ -148,22 +168,28 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
     }
 
     private fun proceedAfterPermission() {
-        val takeVideoIntent = Intent(MediaStore.ACTION_VIDEO_CAPTURE)
-        if (takeVideoIntent.resolveActivity(packageManager) != null) {
-            takeVideoIntent.putExtra(MediaStore.EXTRA_DURATION_LIMIT, 30)
-            startActivityForResult(takeVideoIntent, VIDEO_CAPTURE)
-        }
+        val tutorialIntent = Intent(this, WelcomeActivity::class.java)
+        startActivityForResult(tutorialIntent, TUTORIAL_SETUP)
     }
 
     private fun uploadVideoFile(videoFile: Uri) {
+
+        var progressBar = ProgressBar(this@MainActivity,null,android.R.attr.progressBarStyleLarge);
+        var params=RelativeLayout.LayoutParams(100,100)
+        params.addRule(RelativeLayout.CENTER_IN_PARENT);
+        window.setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
+        mRLParentLayout.addView(progressBar,params);
+        progressBar.setVisibility(View.VISIBLE);  //To show ProgressBar
+
         val cR = this@MainActivity.contentResolver
         val mime = MimeTypeMap.getSingleton()
         val mimeType = mime.getExtensionFromMimeType(cR.getType(videoFile))
         val upFile =
-            mStorageRef.child("videos/" + inputFName.text.toString() + "_" + inputLName.text.toString() + "_" + inputMobile.text.toString() + "." + mimeType)
+            mStorageRef.child("videos/" + inputFName.text.toString() + "_" + inputLName.text.toString() + "_" + inputEmail.text.toString() + "_" +inputMobile.text.toString() + "." + mimeType)
         val uploadTask = upFile.putFile(videoFile)
         val urlTask = uploadTask.continueWithTask { task ->
             if (!task.isSuccessful) {
+                progressBar.setVisibility(View.GONE);
                 throw task.exception!!
             }
 
@@ -173,13 +199,18 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
             if (task.isSuccessful) {
                 val downloadUri = task.result
                 val downloadURL = downloadUri!!.toString()
-                Toast.makeText(this,"Record uploaded successfully",Toast.LENGTH_SHORT).show()
+                //Toast.makeText(this,"Record uploaded successfully",Toast.LENGTH_SHORT).show()
+                progressBar.setVisibility(View.GONE);
+                window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
                 resetFields();
             } else {
                 // Handle failures
+                progressBar.setVisibility(View.GONE);
+                window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
                 Toast.makeText(this,"Something went wrong while uploading video at firebase",Toast.LENGTH_SHORT).show()
             }
         }
+
 
     }
 
@@ -192,6 +223,12 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
         inputLayoutLName.setErrorEnabled(false)
         inputLayoutEmail.setErrorEnabled(false)
         inputLayoutMobile.setErrorEnabled(false)
+
+        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN)
+
+        var Intent=Intent(this, ThankYouActivity::class.java)
+        startActivity(Intent)
+
     }
     private fun validateFName(): Boolean {
         if (inputFName.text.toString().trim { it <= ' ' }.isEmpty()) {
@@ -206,7 +243,7 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
     }
 
     private fun validateLName(): Boolean {
-        if (inputFName.text.toString().trim { it <= ' ' }.isEmpty()) {
+        if (inputLName.text.toString().trim { it <= ' ' }.isEmpty()) {
             inputLayoutLName.setError(getString(R.string.err_msg_lname))
             requestFocus(inputLName)
             return false
@@ -232,7 +269,7 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
     }
 
     private fun validateMobile(): Boolean {
-        if (inputMobile.text.toString().trim { it <= ' ' }.isEmpty()) {
+        if (inputMobile.text.toString().trim { it <= ' ' }.isEmpty() || inputMobile.text.toString().trim { it <= ' '  }.length<10) {
             inputLayoutMobile.setError(getString(R.string.err_msg_mobile))
             requestFocus(inputMobile)
             return false
@@ -244,7 +281,7 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
     }
 
     private fun isValidEmail(email: String): Boolean {
-        return !TextUtils.isEmpty(email) && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+        return !TextUtils.isEmpty(email) && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() && email.contains("@e-Zest",true)
     }
 
     private fun requestFocus(view: View) {

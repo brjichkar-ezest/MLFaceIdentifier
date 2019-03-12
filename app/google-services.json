@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "215193302853-vs9s2q3o1u9hevl7vpel7ivncaabju41.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ezest.mlfaceidentifier",
+            "certificate_hash": "2b4b64308edb4d96630749637a4c4b710885cb51"
+          }
+        },
+        {
           "client_id": "215193302853-p7n72g76ttk1vvs5ojreh3vpef7rmc8l.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

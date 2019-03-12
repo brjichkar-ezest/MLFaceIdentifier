@@ -2,7 +2,6 @@ package com.ezest.mlfaceidentifier
 
 import android.Manifest
 import android.app.Activity
-import android.app.ProgressDialog
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
@@ -19,7 +18,6 @@ import com.karumi.dexter.listener.multi.SnackbarOnAnyDeniedMultiplePermissionsLi
 import com.karumi.dexter.listener.multi.CompositeMultiplePermissionsListener
 import com.ezest.mlfaceidentifier.permissions_listener.SampleErrorListener
 import com.karumi.dexter.listener.PermissionRequestErrorListener
-import android.support.v4.content.ContextCompat
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -30,19 +28,16 @@ import android.support.v7.app.AlertDialog
 import android.text.Editable
 import android.text.TextUtils
 import android.text.TextWatcher
-import android.view.Window
 import android.view.WindowManager
 import android.webkit.MimeTypeMap
 import android.widget.*
 import com.ezest.mlfaceidentifier.permissions_listener.SampleBackgroundThreadPermissionListener
 import com.ezest.mlfaceidentifier.ui_section.ThankYouActivity
+import com.ezest.mlfaceidentifier.ui_section.model_class.SignupUsers
 import com.ezest.mlfaceidentifier.ui_section.tutorial_slider.WelcomeActivity
-import com.google.android.gms.tasks.Continuation
-import com.google.android.gms.tasks.OnCompleteListener
-import com.google.android.gms.tasks.Task
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
-import com.google.firebase.storage.UploadTask
 import com.karumi.dexter.PermissionToken
 
 class MainActivity : AppCompatActivity(),View.OnClickListener {
@@ -63,6 +58,7 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
     lateinit var writeStoragePermission:PermissionListener
     lateinit var mStorageRef: StorageReference
     lateinit var mRLParentLayout :RelativeLayout
+    lateinit var mDatabase: FirebaseDatabase
     val VIDEO_CAPTURE = 101
     val TUTORIAL_SETUP = 102
 
@@ -73,6 +69,7 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
         contentViewForPermission=findViewById(android.R.id.content)
         btnSignUp = findViewById(R.id.btn_signup)
         mStorageRef = FirebaseStorage.getInstance().getReference("Uploads")
+        mDatabase= FirebaseDatabase.getInstance()
         inputLayoutFName = findViewById(R.id.input_layout_fname)
         inputLayoutLName = findViewById(R.id.input_layout_lname)
         inputLayoutEmail = findViewById(R.id.input_layout_email)
@@ -184,8 +181,8 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
         val cR = this@MainActivity.contentResolver
         val mime = MimeTypeMap.getSingleton()
         val mimeType = mime.getExtensionFromMimeType(cR.getType(videoFile))
-        val upFile =
-            mStorageRef.child("videos/" + inputFName.text.toString() + "_" + inputLName.text.toString() + "_" + inputEmail.text.toString() + "_" +inputMobile.text.toString() + "." + mimeType)
+        val fileName=inputFName.text.toString() + "_" + inputLName.text.toString() + "_" + inputEmail.text.toString() + "_" +inputMobile.text.toString() + "." + mimeType
+        val upFile =mStorageRef.child("videos/" + fileName)
         val uploadTask = upFile.putFile(videoFile)
         val urlTask = uploadTask.continueWithTask { task ->
             if (!task.isSuccessful) {
@@ -200,6 +197,8 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
                 val downloadUri = task.result
                 val downloadURL = downloadUri!!.toString()
                 //Toast.makeText(this,"Record uploaded successfully",Toast.LENGTH_SHORT).show()
+                uploadDataToFirebaseSerrver(downloadURL,fileName)
+
                 progressBar.setVisibility(View.GONE);
                 window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
                 resetFields();
@@ -214,16 +213,29 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
 
     }
 
+    private fun uploadDataToFirebaseSerrver(downloadURL: String, fileName: String) {
+        // Creating new user node, which returns the unique key value  new user node would be /users/$userid/
+        lateinit var userId:String
+        userId = mDatabase.getReference("Users").push().key.toString()
+        var currentUser:SignupUsers=SignupUsers()
+        currentUser.firstname=inputFName.text.toString()
+        currentUser.lastname=inputLName.text.toString()
+        currentUser.emailAddress=inputEmail.text.toString()
+        currentUser.mobile=inputMobile.text.toString()
+        currentUser.videoUrl=downloadURL
+        currentUser.fileName=fileName
+        mDatabase.getReference("Users").child(userId).setValue(currentUser);
+    }
+
     private fun resetFields(){
-        inputFName.text.clear()
         inputLName.text.clear()
         inputEmail.text.clear()
         inputMobile.text.clear()
-        inputLayoutFName.setErrorEnabled(false)
+        inputFName.text.clear()
         inputLayoutLName.setErrorEnabled(false)
         inputLayoutEmail.setErrorEnabled(false)
         inputLayoutMobile.setErrorEnabled(false)
-
+        inputLayoutFName.setErrorEnabled(false)
         window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN)
 
         var Intent=Intent(this, ThankYouActivity::class.java)

@@ -2,7 +2,7 @@ package com.ezest.mlfaceidentifier.permissions_listener
 
 import android.os.Handler
 import android.os.Looper
-import com.ezest.mlfaceidentifier.MainActivity
+import com.ezest.mlfaceidentifier.ui_section.signup_section.SignupActivity
 import com.karumi.dexter.PermissionToken
 import com.karumi.dexter.listener.PermissionDeniedResponse
 import com.karumi.dexter.listener.PermissionGrantedResponse
@@ -11,7 +11,7 @@ import com.karumi.dexter.listener.PermissionRequest
 /**
  * Sample listener that shows how to handle permission request callbacks on a background thread
  */
-class SampleBackgroundThreadPermissionListener(activity: MainActivity) : SamplePermissionListener(activity) {
+class SampleBackgroundThreadPermissionListener(activity: SignupActivity) : SamplePermissionListener(activity) {
 
     private val handler = Handler(Looper.getMainLooper())
 

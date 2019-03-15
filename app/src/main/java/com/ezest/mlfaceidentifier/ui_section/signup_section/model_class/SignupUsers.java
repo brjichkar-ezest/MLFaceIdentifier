@@ -1,4 +1,4 @@
-package com.ezest.mlfaceidentifier.ui_section.model_class;
+package com.ezest.mlfaceidentifier.ui_section.signup_section.model_class;
 
 public class SignupUsers {
     String firstname;

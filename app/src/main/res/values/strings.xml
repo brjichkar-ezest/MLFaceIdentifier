@@ -18,11 +18,17 @@
     <string name="permission_unknown_feedback">UNKNOWN</string>
     <string name="all_permissions_denied_feedback">All those permissions are needed for doing some magic</string>
     <string name="camera_permission_denied_feedback">Camera permission is needed for doing some magic</string>
-    <string name="contacts_permission_denied_feedback">Read storage permission is needed for reading your captured video</string>
+    <string name="contacts_permission_denied_feedback">Read storage permission is needed for reading your captured
+        video
+    </string>
     <string name="audio_permission_denied_dialog_title">Write on storage permission request</string>
-    <string name="audio_permission_denied_dialog_feedback">Unable to capture video until you accept the permission request</string>
+    <string name="audio_permission_denied_dialog_feedback">Unable to capture video until you accept the permission
+        request
+    </string>
     <string name="permission_rationale_title">We need this permission</string>
-    <string name="permission_rationale_message">This permission is needed for doing some fancy stuff so please, allow it!</string>
+    <string name="permission_rationale_message">This permission is needed for doing some fancy stuff so please, allow
+        it!
+    </string>
     <string name="permission_rationale_settings_button_text">SETTINGS</string>
 
 
@@ -30,14 +36,29 @@
     <string name="next">NEXT</string>
     <string name="skip">SKIP</string>
     <string name="start">GOT IT</string>
-    <string name="slide_1_title">Right and Left </string>
+    <string name="slide_1_title">Right and Left</string>
     <string name="slide_1_desc">While recording please turn your face from left to right slowly</string>
     <string name="slide_2_title">Next Up and Down</string>
     <string name="slide_2_desc">While recording please turn your face up and down slowely</string>
     <string name="slide_3_title">Without Spects</string>
-    <string name="slide_3_desc">Remove any spects you have </string>
+    <string name="slide_3_desc">Remove any spects you have</string>
     <string name="slide_4_title">Get Ready</string>
     <string name="slide_4_desc">Last chance to look pretty.</string>
-    <string name="play_again_desc">To see the welcome slider again, goto Settings -> apps -> welcome slider -> clear data</string>
+    <string name="play_again_desc">To see the welcome slider again, goto Settings -> apps -> welcome slider -> clear
+        data
+    </string>
     <string name="play_again">Play Again</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+
+    <string name="permission_request">This app needs permission for camera and audio recording.</string>
+    <string name="camera_error">This device doesn\'t support Camera2 API.</string>
+    <string name="message_need_permission">Need Permissions</string>
+    <string name="message_permission">This app needs permission to use this feature. You can grant them in app
+        settings.
+    </string>
+    <string name="title_go_to_setting">GOTO SETTINGS</string>
+    <string name="play_stop">Play or Stop</string>
 </resources>

@@ -1,4 +1,4 @@
-package com.ezest.mlfaceidentifier
+package com.ezest.mlfaceidentifier.ui_section.signup_section
 
 import android.Manifest
 import android.app.Activity
@@ -31,16 +31,19 @@ import android.text.TextWatcher
 import android.view.WindowManager
 import android.webkit.MimeTypeMap
 import android.widget.*
+import com.camerakit.CameraKitView
+import com.ezest.mlfaceidentifier.R
 import com.ezest.mlfaceidentifier.permissions_listener.SampleBackgroundThreadPermissionListener
-import com.ezest.mlfaceidentifier.ui_section.ThankYouActivity
-import com.ezest.mlfaceidentifier.ui_section.model_class.SignupUsers
+import com.ezest.mlfaceidentifier.ui_section.custom_camera.CameraActivity
+import com.ezest.mlfaceidentifier.ui_section.thankyou_section.ThankYouActivity
+import com.ezest.mlfaceidentifier.ui_section.signup_section.model_class.SignupUsers
 import com.ezest.mlfaceidentifier.ui_section.tutorial_slider.WelcomeActivity
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
 import com.karumi.dexter.PermissionToken
 
-class MainActivity : AppCompatActivity(),View.OnClickListener {
+class SignupActivity : AppCompatActivity(),View.OnClickListener {
     lateinit var inputFName:EditText
     lateinit var inputLName:EditText
     lateinit var inputEmail:EditText
@@ -54,6 +57,7 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
     lateinit var errorListener: PermissionRequestErrorListener
     lateinit var contentViewForPermission:View
     lateinit var cameraPermissionListener:PermissionListener
+    lateinit var audioPermissionListener:PermissionListener
     lateinit var readStoragePermission:PermissionListener
     lateinit var writeStoragePermission:PermissionListener
     lateinit var mStorageRef: StorageReference
@@ -61,6 +65,7 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
     lateinit var mDatabase: FirebaseDatabase
     val VIDEO_CAPTURE = 101
     val TUTORIAL_SETUP = 102
+    lateinit var cameraKitView:CameraKitView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,13 +89,33 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
         inputEmail.addTextChangedListener(MyTextWatcher(inputEmail))
         inputMobile.addTextChangedListener(MyTextWatcher(inputMobile))
         btnSignUp.setOnClickListener(this)
-
+        cameraKitView = findViewById(R.id.camera);
         createPermissionListeners()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        cameraKitView.onStart()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        cameraKitView.onResume()
+    }
+
+    override fun onPause() {
+        cameraKitView.onPause()
+        super.onPause()
+    }
+
+    override fun onStop() {
+        cameraKitView.onStop()
+        super.onStop()
     }
 
     override fun onClick(v: View?) {
         when(v?.id){
-            R.id.btn_signup->validateForm()
+            R.id.btn_signup ->validateForm()
         }
     }
 
@@ -113,6 +138,9 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
                 val takeVideoIntent = Intent(MediaStore.ACTION_VIDEO_CAPTURE)
                 if (takeVideoIntent.resolveActivity(packageManager) != null) {
                     takeVideoIntent.putExtra(MediaStore.EXTRA_DURATION_LIMIT, 30)
+                    takeVideoIntent.putExtra("android.intent.extras.CAMERA_FACING", android.hardware.Camera.CameraInfo.CAMERA_FACING_FRONT);
+                    takeVideoIntent.putExtra("android.intent.extras.LENS_FACING_FRONT", 1);
+                    takeVideoIntent.putExtra("android.intent.extra.USE_FRONT_CAMERA", true);
                     startActivityForResult(takeVideoIntent, VIDEO_CAPTURE)
                 }else{
                     Toast.makeText(this, "Unable to access camera", Toast.LENGTH_LONG).show()
@@ -127,7 +155,7 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
 
     private fun checkPermission(){
         Dexter.withActivity(this)
-            .withPermissions(Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE,
+            .withPermissions(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO,Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE)
             .withListener(allPermissionsListener)
             .withErrorListener(errorListener)
@@ -165,20 +193,20 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
     }
 
     private fun proceedAfterPermission() {
-        val tutorialIntent = Intent(this, WelcomeActivity::class.java)
+        val tutorialIntent = Intent(this, CameraActivity::class.java)
         startActivityForResult(tutorialIntent, TUTORIAL_SETUP)
     }
 
     private fun uploadVideoFile(videoFile: Uri) {
 
-        var progressBar = ProgressBar(this@MainActivity,null,android.R.attr.progressBarStyleLarge);
+        var progressBar = ProgressBar(this@SignupActivity,null,android.R.attr.progressBarStyleLarge);
         var params=RelativeLayout.LayoutParams(100,100)
         params.addRule(RelativeLayout.CENTER_IN_PARENT);
         window.setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
         mRLParentLayout.addView(progressBar,params);
         progressBar.setVisibility(View.VISIBLE);  //To show ProgressBar
 
-        val cR = this@MainActivity.contentResolver
+        val cR = this@SignupActivity.contentResolver
         val mime = MimeTypeMap.getSingleton()
         val mimeType = mime.getExtensionFromMimeType(cR.getType(videoFile))
         val fileName=inputFName.text.toString() + "_" + inputLName.text.toString() + "_" + inputEmail.text.toString() + "_" +inputMobile.text.toString() + "." + mimeType
@@ -389,6 +417,7 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
             dialogOnDeniedPermissionListener
         )
         cameraPermissionListener = SampleBackgroundThreadPermissionListener(this)
+        audioPermissionListener = SampleBackgroundThreadPermissionListener(this)
 
         errorListener = SampleErrorListener()
     }

@@ -13,12 +13,10 @@ import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import com.ezest.mlfaceidentifier.MainActivity
 import com.ezest.mlfaceidentifier.R
 
 
@@ -151,7 +149,7 @@ class WelcomeActivity : AppCompatActivity() {
         prefManager!!.isFirstTimeLaunch = false
 
         /*
-        startActivity(Intent(this@WelcomeActivity, MainActivity::class.java))
+        startActivity(Intent(this@WelcomeActivity, SignupActivity::class.java))
         finish()
         */
         val tutoriaDone=Intent()

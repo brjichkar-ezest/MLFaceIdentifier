@@ -1,4 +1,4 @@
-package com.ezest.mlfaceidentifier.ui_section
+package com.ezest.mlfaceidentifier.ui_section.thankyou_section
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
